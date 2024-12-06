@@ -1,5 +1,6 @@
 advent_of_code::solution!(6);
 
+use rayon::prelude::*;
 use std::collections::HashSet;
 
 fn parse_input(input: &str) -> Vec<Vec<char>> {
@@ -28,7 +29,8 @@ fn visited(grid: &Vec<Vec<char>>) -> (HashSet<((usize, usize), DIR)>, bool) {
         }
     }
 
-    let mut visited = HashSet::new();
+    // let mut visited = HashSet::new();
+    let mut visited = HashSet::with_capacity(grid.len() * grid[0].len());
     loop {
         if !visited.insert((pos, dir)) {
             // looping
@@ -93,24 +95,22 @@ pub fn part_one(input: &str) -> Option<usize> {
     )
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    let mut grid = parse_input(input);
+pub fn part_two(input: &str) -> Option<usize> {
+    let grid = parse_input(input);
     let p1 = visited(&grid)
         .0
         .into_iter()
         .map(|((x, y), _)| (x, y))
-        .collect::<HashSet<_>>()
-        .into_iter();
-    let mut count = 0;
-    for (x, y) in p1 {
-        let c = grid[y][x];
-        grid[y][x] = '#';
-        let exited = visited(&grid).1;
-        if !(exited) {
-            count += 1
-        }
-        grid[y][x] = c;
-    }
+        .collect::<HashSet<_>>();
+    let count = p1
+        .par_iter()
+        .filter(|&&(x, y)| {
+            let mut test = grid.clone();
+            test[y][x] = '#';
+            let exited = visited(&test).1;
+            !exited
+        })
+        .count();
     Some(count)
 }
 
