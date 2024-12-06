@@ -27,6 +27,7 @@ test_lib = []
 # Template dependencies
 chrono = { version = "0.4.38", optional = true }
 dhat = { version = "0.3.3", optional = true }
+gxhash = "3.4.1"
 itertools = "0.13.0"
 pico-args = "0.5.0"
 rayon = "1.10.0"

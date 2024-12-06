@@ -1,7 +1,8 @@
 advent_of_code::solution!(6);
 
 use rayon::prelude::*;
-use std::collections::HashSet;
+// use std::collections::HashSet;
+use gxhash::{HashSet, HashSetExt};
 
 fn parse_input(input: &str) -> Vec<Vec<char>> {
     input.lines().map(|line| line.chars().collect()).collect()
@@ -29,7 +30,6 @@ fn visited(grid: &Vec<Vec<char>>) -> (HashSet<((usize, usize), DIR)>, bool) {
         }
     }
 
-    // let mut visited = HashSet::new();
     let mut visited = HashSet::with_capacity(grid.len() * grid[0].len());
     loop {
         if !visited.insert((pos, dir)) {
