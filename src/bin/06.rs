@@ -4,8 +4,9 @@ use rayon::prelude::*;
 // use std::collections::HashSet;
 use gxhash::{HashSet, HashSetExt};
 
-fn parse_input(input: &str) -> Vec<Vec<char>> {
-    input.lines().map(|line| line.chars().collect()).collect()
+fn parse_input(input: &str) -> Vec<Vec<u8>> {
+    // input.lines().map(|line| line.chars().collect()).collect()
+    input.lines().map(Vec::from).collect()
 }
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -17,14 +18,14 @@ enum DIR {
 }
 use DIR::*;
 
-fn visited(grid: &Vec<Vec<char>>) -> (HashSet<((usize, usize), DIR)>, bool) {
+fn visited(grid: &Vec<Vec<u8>>) -> (HashSet<((usize, usize), DIR)>, bool) {
     let mut pos = (0, 0);
     let mut dir = DIR::Up;
 
     // find the starting position
     for y in 0..grid.len() {
         for x in 0..grid[0].len() {
-            if grid[y][x] == '^' {
+            if grid[y][x] == b'^' {
                 pos = (x, y);
             }
         }
@@ -67,7 +68,7 @@ fn visited(grid: &Vec<Vec<char>>) -> (HashSet<((usize, usize), DIR)>, bool) {
             break;
         }
         match c.unwrap() {
-            '#' => {
+            b'#' => {
                 dir = match dir {
                     Up => Right,
                     Right => Down,
@@ -106,7 +107,7 @@ pub fn part_two(input: &str) -> Option<usize> {
         .par_iter()
         .filter(|&&(x, y)| {
             let mut test = grid.clone();
-            test[y][x] = '#';
+            test[y][x] = b'#';
             let exited = visited(&test).1;
             !exited
         })
