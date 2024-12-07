@@ -1,7 +1,9 @@
 advent_of_code::solution!(7);
 
-use itertools::{repeat_n, Itertools};
-use std::collections::VecDeque;
+use rayon::prelude::*;
+
+//use itertools::{repeat_n, Itertools};
+//use std::collections::VecDeque;
 
 struct Equation {
     value: u64,
@@ -10,7 +12,7 @@ struct Equation {
 
 #[derive(Debug, Copy, Clone)]
 enum Op {
-    N(u64),
+    //     N(u64),
     Add,
     Mul,
     Con,
@@ -32,6 +34,7 @@ fn parse_input(input: &str) -> Vec<Equation> {
         .collect::<Vec<_>>()
 }
 
+/*
 fn eval(eq: &mut VecDeque<Op>) -> Option<u64> {
     let mut left = match eq.pop_front()? {
         N(n) => n,
@@ -46,8 +49,8 @@ fn eval(eq: &mut VecDeque<Op>) -> Option<u64> {
             Add => left + right,
             Mul => left * right,
             Con => {
-                let s = left.to_string() + &right.to_string();
-                s.parse::<u64>().unwrap()
+                let n = 10u64.pow(right.ilog10() + 1);
+                left * n + right
             }
             _ => panic!(),
         }
@@ -69,12 +72,34 @@ fn solveable(eq: &Equation, o: &[Op]) -> bool {
     }
     false
 }
+*/
+
+fn solveable_1(acc: u64, values: &[u64], target: u64, o: &[Op]) -> bool {
+    if values.len() == 0 {
+        return acc == target;
+    }
+    return solveable_1(acc + values[0], &values[1..], target, o)
+        || solveable_1(acc * values[0], &values[1..], target, o);
+}
+
+fn solveable_2(acc: u64, values: &[u64], target: u64, o: &[Op]) -> bool {
+    if values.len() == 0 {
+        return acc == target;
+    }
+    return solveable_2(acc + values[0], &values[1..], target, o)
+        || solveable_2(acc * values[0], &values[1..], target, o)
+        || {
+            let n = 10u64.pow(values[0].ilog10() + 1);
+            solveable_2(acc * n + values[0], &values[1..], target, o)
+        };
+}
 
 pub fn part_one(input: &str) -> Option<u64> {
     let equations = parse_input(input);
     let x = equations
-        .into_iter()
-        .filter(|e| solveable(e, &[Add, Mul]))
+        .into_par_iter()
+        // .filter(|e| solveable(e, &[Add, Mul]))
+        .filter(|e| solveable_1(0, &e.inputs, e.value, &[Add, Mul]))
         .map(|e| e.value)
         .sum();
     Some(x)
@@ -83,8 +108,9 @@ pub fn part_one(input: &str) -> Option<u64> {
 pub fn part_two(input: &str) -> Option<u64> {
     let equations = parse_input(input);
     let x = equations
-        .into_iter()
-        .filter(|e| solveable(e, &[Add, Mul, Con]))
+        .into_par_iter()
+        // .filter(|e| solveable(e, &[Add, Mul, Con]))
+        .filter(|e| solveable_2(0, &e.inputs, e.value, &[Add, Mul, Con]))
         .map(|e| e.value)
         .sum();
     Some(x)
