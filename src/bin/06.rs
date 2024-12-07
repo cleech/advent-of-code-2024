@@ -1,11 +1,8 @@
 advent_of_code::solution!(6);
 
-// use gxhash::{HashSet, HashSetExt};
 use rayon::prelude::*;
-// use std::collections::HashSet;
 
 fn parse_input(input: &str) -> Vec<Vec<u8>> {
-    // input.lines().map(|line| line.chars().collect()).collect()
     input.lines().map(Vec::from).collect()
 }
 
@@ -18,8 +15,7 @@ enum DIR {
 }
 use DIR::*;
 
-//fn visited(grid: &Vec<Vec<u8>>) -> (HashSet<((usize, usize), DIR)>, bool) {
-fn visited(grid: &Vec<Vec<u8>>) -> (Vec<Vec<[bool; 4]>>, bool) {
+fn visited(grid: &Vec<Vec<u8>>) -> Option<Vec<Vec<[bool; 4]>>> {
     let mut pos = (0, 0);
     let mut dir = DIR::Up;
 
@@ -32,13 +28,11 @@ fn visited(grid: &Vec<Vec<u8>>) -> (Vec<Vec<[bool; 4]>>, bool) {
         }
     }
 
-    //    let mut visited = HashSet::with_capacity(grid.len() * grid[0].len());
     let mut visited = vec![vec![[false; 4]; grid[0].len()]; grid[0].len()];
     loop {
-        // if !visited.insert((pos, dir)) {
         if visited[pos.1][pos.0][dir as usize] {
             // looping
-            return (visited, false);
+            return None;
         } else {
             visited[pos.1][pos.0][dir as usize] = true;
         }
@@ -85,31 +79,23 @@ fn visited(grid: &Vec<Vec<u8>>) -> (Vec<Vec<[bool; 4]>>, bool) {
             _ => pos = (x, y),
         }
     }
-    (visited, true)
+    Some(visited)
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
     let grid = parse_input(input);
-    // Some(visited(&grid).0.len())
-    let s = visited(&grid).0;
+    let s = visited(&grid)?;
     Some(
         s.iter()
             .flat_map(|row| row.iter())
             .filter(|x| x.iter().any(|b| *b))
             .count(),
-        //            .into_iter()
-        //            .map(|((x, y), _)| (x, y))
-        //            .collect::<HashSet<_>>()
-        //            .len(),
     )
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
     let grid = parse_input(input);
-    let p1 = visited(&grid).0;
-    //        .into_iter()
-    //        .map(|((x, y), _)| (x, y))
-    //        .collect::<HashSet<_>>();
+    let p1 = visited(&grid)?;
     let count = p1
         .par_iter()
         .enumerate()
@@ -119,10 +105,10 @@ pub fn part_two(input: &str) -> Option<usize> {
                 return false;
             }
             let mut test = grid.clone();
-            let saved = test[*y][*x];
+            // let saved = test[*y][*x];
             test[*y][*x] = b'#';
-            let exited = visited(&test).1;
-            test[*y][*x] = saved;
+            let exited = visited(&test).is_some();
+            // test[*y][*x] = saved;
             !exited
         })
         .count();
