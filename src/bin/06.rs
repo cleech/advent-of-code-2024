@@ -16,6 +16,24 @@ enum DIR {
 }
 use DIR::*;
 
+struct Grid {
+    raw: Vec<Vec<u8>>,
+    pos: (usize, usize),
+}
+
+impl Grid {
+    fn from_str(input: &str) -> Grid {
+        Grid {
+            raw: input.lines().map(Vec::from).collect(),
+            pos: (0, 0),
+        }
+    }
+
+    fn get(&self, x: usize, y: usize) -> u8 {
+        self.raw[y][x]
+    }
+}
+
 fn visited(grid: &Vec<Vec<u8>>) -> Option<Vec<Vec<[bool; 4]>>> {
     let mut pos = (0, 0);
     let mut dir = DIR::Up;
