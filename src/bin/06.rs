@@ -1,6 +1,7 @@
 advent_of_code::solution!(6);
 
-use rayon::prelude::*;
+// use rayon::prelude::*;
+use std::thread::*;
 
 fn parse_input(input: &str) -> Vec<Vec<u8>> {
     input.lines().map(Vec::from).collect()
@@ -95,23 +96,49 @@ pub fn part_one(input: &str) -> Option<usize> {
 
 pub fn part_two(input: &str) -> Option<usize> {
     let grid = parse_input(input);
-    let p1 = visited(&grid)?;
-    let count = p1
-        .par_iter()
+    let _p1 = visited(&grid)?;
+
+    let p1: Vec<(usize, usize, [bool; 4])> = _p1
+        .into_iter()
         .enumerate()
-        .flat_map(|(y, v)| v.par_iter().enumerate().map(move |(x, b)| (x, y, b)))
-        .filter(|(x, y, &dirs)| {
-            if !dirs.iter().any(|&b| b) {
-                return false;
-            }
-            let mut test = grid.clone();
-            // let saved = test[*y][*x];
-            test[*y][*x] = b'#';
-            let exited = visited(&test).is_some();
-            // test[*y][*x] = saved;
-            !exited
+        .flat_map(|(y, row)| {
+            row.into_iter()
+                .enumerate()
+                .map(move |(x, dirs)| (x, y, dirs))
         })
-        .count();
+        .collect();
+
+    let mut count = 0;
+    let cpus = available_parallelism().unwrap().get();
+
+    scope(|s| {
+        let threads: Vec<_> = p1
+            .chunks((p1.len() + cpus - 1) / cpus)
+            .map(|chunk| {
+                let mut test = grid.clone();
+                s.spawn(move || -> usize {
+                    chunk
+                        .iter()
+                        .filter(|(x, y, dirs)| {
+                            if !dirs.iter().any(|&b| b) {
+                                return false;
+                            }
+                            // let mut test = grid.clone();
+                            let saved = test[*y][*x];
+                            test[*y][*x] = b'#';
+                            let exited = visited(&test).is_some();
+                            test[*y][*x] = saved;
+                            !exited
+                        })
+                        .count()
+                })
+            })
+            .collect();
+        count += threads
+            .into_iter()
+            .map(|t| t.join().unwrap())
+            .sum::<usize>();
+    });
     Some(count)
 }
 
