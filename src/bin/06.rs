@@ -1,7 +1,7 @@
 advent_of_code::solution!(6);
 
 // use rayon::prelude::*;
-use std::thread::*;
+use std::thread;
 
 fn parse_input(input: &str) -> Vec<Vec<u8>> {
     input.lines().map(Vec::from).collect()
@@ -15,7 +15,7 @@ enum DIR {
     Right,
 }
 use DIR::*;
-
+/*
 struct Grid {
     raw: Vec<Vec<u8>>,
     pos: (usize, usize),
@@ -33,6 +33,7 @@ impl Grid {
         self.raw[y][x]
     }
 }
+*/
 
 fn visited(grid: &Vec<Vec<u8>>) -> Option<Vec<Vec<[bool; 4]>>> {
     let mut pos = (0, 0);
@@ -127,9 +128,9 @@ pub fn part_two(input: &str) -> Option<usize> {
         .collect();
 
     let mut count = 0;
-    let cpus = available_parallelism().unwrap().get();
+    let cpus = thread::available_parallelism().unwrap().get();
 
-    scope(|s| {
+    thread::scope(|s| {
         let threads: Vec<_> = p1
             .chunks((p1.len() + cpus - 1) / cpus)
             .map(|chunk| {
