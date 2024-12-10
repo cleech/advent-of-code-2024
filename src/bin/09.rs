@@ -6,7 +6,59 @@ enum Block {
     Used(usize),
 }
 
+fn checksum(fid: usize, off: usize, len: usize) -> usize {
+    let last = off + len - 1;
+    let n = (last * (last + 1)) / 2;
+    let m = if off != 0 { (off * (off - 1)) / 2 } else { 0 };
+    fid * (n - m)
+}
+
 pub fn part_one(input: &str) -> Option<usize> {
+    let map = input
+        .trim()
+        .bytes()
+        .map(|b| (b - b'0') as usize)
+        .collect::<Vec<_>>();
+
+    let mut left = 0;
+    let mut right = map.len() - 1;
+
+    let mut lba = 0;
+    let mut cs = 0;
+
+    let mut needed = map[right];
+
+    while left < right {
+        let n = map[left];
+        let fid = left / 2;
+        cs += checksum(fid, lba, n);
+        lba += n;
+
+        left += 1;
+        let mut free_space = map[left];
+        left += 1;
+
+        while free_space > 0 {
+            if needed == 0 {
+                if left > right {
+                    break;
+                }
+                right -= 2;
+                needed = map[right];
+            }
+            let m = needed.min(free_space);
+            let fid = right / 2;
+            cs += checksum(fid, lba, m);
+            lba += m;
+            free_space -= m;
+            needed -= m;
+        }
+    }
+    cs += checksum(right / 2, lba, needed);
+    Some(cs)
+}
+
+pub fn part_one_0(input: &str) -> Option<usize> {
     let mut v = input
         .trim()
         .as_bytes()
