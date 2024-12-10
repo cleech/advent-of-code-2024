@@ -8,13 +8,13 @@ fn parse_input(input: &str) -> Vec<Vec<u8>> {
 }
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-enum DIR {
+enum Dir {
     Up,
     Down,
     Left,
     Right,
 }
-use DIR::*;
+use Dir::*;
 /*
 struct Grid {
     raw: Vec<Vec<u8>>,
@@ -35,9 +35,9 @@ impl Grid {
 }
 */
 
-fn visited(grid: &Vec<Vec<u8>>) -> Option<Vec<Vec<[bool; 4]>>> {
+fn visited(grid: &[Vec<u8>]) -> Option<Vec<Vec<[bool; 4]>>> {
     let mut pos = (0, 0);
-    let mut dir = DIR::Up;
+    let mut dir = Up;
 
     // find the starting position
     for y in 0..grid.len() {
@@ -132,7 +132,7 @@ pub fn part_two(input: &str) -> Option<usize> {
 
     thread::scope(|s| {
         let threads: Vec<_> = p1
-            .chunks((p1.len() + cpus - 1) / cpus)
+            .chunks(p1.len().div_ceil(cpus))
             .map(|chunk| {
                 let mut test = grid.clone();
                 s.spawn(move || -> usize {

@@ -105,25 +105,25 @@ fn solveable_2(acc: u64, values: &[u64], target: u64) -> bool {
 */
 
 fn solveable_1_1(values: &[u64], target: u64) -> bool {
-    if values.len() == 0 {
+    if values.is_empty() {
         return target == 0;
     }
     let v = *values.last().unwrap();
-    return ((target >= v) && solveable_1_1(&values[0..(values.len() - 1)], target - v))
-        || ((target % v == 0) && solveable_1_1(&values[0..(values.len() - 1)], target / v));
+    ((target >= v) && solveable_1_1(&values[0..(values.len() - 1)], target - v))
+        || ((target % v == 0) && solveable_1_1(&values[0..(values.len() - 1)], target / v))
 }
 
 fn solveable_2_1(values: &[u64], target: u64) -> bool {
-    if values.len() == 0 {
+    if values.is_empty() {
         return target == 0;
     }
     let v = *values.last().unwrap();
-    return ((target >= v) && solveable_2_1(&values[0..(values.len() - 1)], target - v))
+    ((target >= v) && solveable_2_1(&values[0..(values.len() - 1)], target - v))
         || ((target % v == 0) && solveable_2_1(&values[0..(values.len() - 1)], target / v))
         || {
             let n = 10u64.pow(v.ilog10() + 1);
             (target % n == v) && solveable_2_1(&values[0..(values.len() - 1)], target / n)
-        };
+        }
 }
 
 pub fn part_one(input: &str) -> Option<u64> {
