@@ -8,6 +8,7 @@ enum Block {
 
 pub fn part_one(input: &str) -> Option<usize> {
     let mut v = input
+        .trim()
         .as_bytes()
         .chunks(2)
         .enumerate()
@@ -20,10 +21,8 @@ pub fn part_one(input: &str) -> Option<usize> {
                 v.append(&mut [Block::Used(id)].repeat(n.into()));
             }
             if let Some(n) = free {
-                if *n >= b'0' {
-                    let n = *n - b'0';
-                    v.append(&mut [Block::Free].repeat(n.into()));
-                }
+                let n = *n - b'0';
+                v.append(&mut [Block::Free].repeat(n.into()));
             }
             v
         })
@@ -61,24 +60,9 @@ enum Extent {
     Used { id: usize, len: usize, moved: bool },
 }
 
-fn printit(v: &Vec<Extent>) {
-    println!(
-        "{:?}",
-        v.iter()
-            .map(|&e| match e {
-                Extent::Free(n) => ".".repeat(n).chars().collect::<String>(),
-                Extent::Used {
-                    id,
-                    len: n,
-                    moved: _,
-                } => id.to_string().repeat(n).chars().collect(),
-            })
-            .collect::<String>()
-    );
-}
-
 pub fn part_two(input: &str) -> Option<usize> {
     let mut v = input
+        .trim()
         .as_bytes()
         .chunks(2)
         .enumerate()
@@ -94,18 +78,15 @@ pub fn part_two(input: &str) -> Option<usize> {
                 });
             }
             if let Some(n) = free {
-                if *n >= b'0' {
-                    let n: usize = (*n - b'0').into();
-                    if n > 0 {
-                        v.push(Extent::Free(n));
-                    }
+                let n: usize = (*n - b'0').into();
+                if n > 0 {
+                    v.push(Extent::Free(n));
                 }
             }
             v
         })
         .collect::<Vec<Extent>>();
 
-    // printit(&v);
     let mut added = 0;
     for ref mut j in (0..v.len()).rev() {
         let extlen;
@@ -149,7 +130,6 @@ pub fn part_two(input: &str) -> Option<usize> {
                         moved: true,
                     };
                     v.swap(i, j);
-                    // printit(&v);
                     break;
                 }
             }
