@@ -1,10 +1,11 @@
 advent_of_code::solution!(11);
 
 use gxhash::{HashMap, HashMapExt};
-use rayon::prelude::*;
-use std::iter::once;
 
-fn _solve(input: &str, loops: usize) -> Option<usize> {
+// this gets too big
+/*
+use std::iter::once;
+fn solve(input: &str, loops: usize) -> Option<usize> {
     let mut stones = input
         .split_whitespace()
         .map(|s| s.parse::<u64>().unwrap())
@@ -27,10 +28,10 @@ fn _solve(input: &str, loops: usize) -> Option<usize> {
                 }
             })
             .collect::<Vec<_>>();
-        // dbg!(&stones);
     }
     Some(stones.len())
 }
+*/
 
 fn blink(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize>) -> usize {
     if count == 0 {
@@ -55,20 +56,57 @@ fn blink(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize>) -> 
 }
 
 fn solve2(input: &str, loops: usize) -> Option<usize> {
-    let mut cache = HashMap::with_capacity(150_000);
     let stones = input
         .split_whitespace()
         .map(|s| s.parse::<u64>().unwrap())
         .collect::<Vec<_>>();
+    let mut cache = HashMap::with_capacity(150_000);
     let count = stones.iter().map(|&s| blink(s, loops, &mut cache)).sum();
     Some(count)
 }
 
+fn solve3(input: &str, loops: usize) -> Option<usize> {
+    let mut stones = HashMap::with_capacity(5000);
+    input
+        .split_whitespace()
+        .map(|s| s.parse::<u64>().unwrap())
+        .for_each(|s| {
+            stones
+                .entry(s)
+                .and_modify(|count| *count += 1)
+                .or_insert(1_usize);
+        });
+
+    let mut next = HashMap::with_capacity(5000);
+
+    for _ in 0..loops {
+        for (&stone, &count) in &stones {
+            let len = stone.checked_ilog10().unwrap_or(0) + 1;
+            if stone == 0 {
+                next.entry(1).and_modify(|c| *c += count).or_insert(count);
+            } else if len % 2 == 0 {
+                let n = 10_u64.pow(len / 2);
+                let a = stone / n;
+                let b = stone % n;
+                next.entry(a).and_modify(|c| *c += count).or_insert(count);
+                next.entry(b).and_modify(|c| *c += count).or_insert(count);
+            } else {
+                next.entry(stone * 2024)
+                    .and_modify(|c| *c += count)
+                    .or_insert(count);
+            };
+        }
+        (stones, next) = (next, stones);
+        next.clear();
+    }
+    Some(stones.values().sum())
+}
+
 pub fn part_one(input: &str) -> Option<usize> {
-    solve2(input, 25)
+    solve3(input, 25)
 }
 pub fn part_two(input: &str) -> Option<usize> {
-    solve2(input, 75)
+    solve3(input, 75)
 }
 
 #[cfg(test)]
