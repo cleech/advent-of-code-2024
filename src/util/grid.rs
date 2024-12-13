@@ -4,6 +4,9 @@ use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 
+use itertools::Itertools;
+
+#[derive(Debug)]
 pub struct Grid<T> {
     pub width: isize,
     pub height: isize,
@@ -21,23 +24,23 @@ impl Grid<u8> {
     }
 }
 
-impl<T: FromStr> Grid<T>
-where
-    <T as FromStr>::Err: Debug,
-{
-    pub fn parse(input: &str) -> Self {
+impl Grid<()> {
+    pub fn parse<T: FromStr>(input: &str) -> Result<Grid<T>, T::Err>
+    where
+        <T as FromStr>::Err: Debug,
+    {
         let v: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
         let height = v.len() as isize;
         let width = v[0].len() as isize;
         let data = v
             .into_iter()
-            .flat_map(|l| l.into_iter().map(|c| c.to_string().parse::<T>().unwrap()))
-            .collect();
-        Grid {
+            .flat_map(|l| l.into_iter().map(|c| c.to_string().parse::<T>()))
+            .collect::<Result<Vec<_>, T::Err>>()?;
+        Ok(Grid {
             width,
             height,
             raw: data,
-        }
+        })
     }
 }
 
@@ -54,8 +57,14 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn in_bounds(&self, (x, y): Point) -> bool {
+    pub fn in_bounds(&self, Point(x, y): Point) -> bool {
         x >= 0 && x < self.width && y >= 0 && y < self.height
+    }
+
+    pub fn points(&self) -> impl Iterator<Item = Point> {
+        (0..self.width)
+            .cartesian_product(0..self.height)
+            .map(|t| Point(t.0, t.1))
     }
 }
 

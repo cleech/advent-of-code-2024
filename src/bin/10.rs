@@ -1,7 +1,7 @@
 advent_of_code::solution!(10);
 
 use advent_of_code::util::grid::Grid;
-use advent_of_code::util::point::Point;
+use advent_of_code::util::point::*;
 
 fn trailscore(grid: &mut Grid<(u32, bool)>, head: Point, part2: bool) -> u32 {
     let loc = grid[head].0;
@@ -11,8 +11,7 @@ fn trailscore(grid: &mut Grid<(u32, bool)>, head: Point, part2: bool) -> u32 {
     }
 
     let mut ret: u32 = 0;
-    let (x, y) = head;
-    for &next in &[(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] {
+    for &next in &[head + RIGHT, head + LEFT, head + DOWN, head + UP] {
         if grid.in_bounds(next) && (part2 || grid[next].1 == false) && grid[next].0 == loc + 1 {
             ret += trailscore(grid, next, part2);
         }
@@ -21,14 +20,14 @@ fn trailscore(grid: &mut Grid<(u32, bool)>, head: Point, part2: bool) -> u32 {
 }
 
 pub fn solve(input: &str, part2: bool) -> Option<u32> {
-    let grid: Grid<u32> = Grid::parse(input);
+    let grid: Grid<u32> = Grid::parse(input).ok()?;
     let mut score = 0;
 
     for x in 0..grid.width {
         for y in 0..grid.height {
-            if grid[(x, y)] == 0 {
+            if grid[Point(x, y)] == 0 {
                 let mut grid = grid.map(|&h| (h, false));
-                score += trailscore(&mut grid, (x, y), part2);
+                score += trailscore(&mut grid, Point(x, y), part2);
             }
         }
     }
