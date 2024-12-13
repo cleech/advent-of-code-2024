@@ -3,6 +3,7 @@ use std::ops::{Add, AddAssign};
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Point(pub isize, pub isize);
 
+/* unit vectors for orthoganal directions, as points for ease of use */
 pub const UP: Point = Point(0, -1);
 pub const DOWN: Point = Point(0, 1);
 pub const RIGHT: Point = Point(1, 0);
@@ -31,9 +32,22 @@ impl Add for Point {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+
 impl AddAssign for Point {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         *self = Self(self.0 + rhs.0, self.1 + rhs.1);
+    }
+}
+
+impl Point {
+    /* 90° rotations */
+    #[inline]
+    pub fn clockwise(&self) -> Self {
+        Point(-self.1, self.0)
+    }
+    #[inline]
+    pub fn counter_clockwise(&self) -> Self {
+        Point(self.1, -self.0)
     }
 }

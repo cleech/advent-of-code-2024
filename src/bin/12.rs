@@ -151,6 +151,62 @@ pub fn part_two(input: &str) -> Option<usize> {
     Some(regions.iter().map(|r| r.area() * r.sides()).sum())
 }
 
+/* faster solution for both parts
+* edges and corners counted during region finding flood fill
+* does not save off any region structures
+*/
+pub fn _solve(input: &str) -> Option<usize> {
+    let grid = Grid::parse::<char>(input).ok()?;
+    let mut visited = HashSet::default();
+    let mut cost = 0;
+    let mut cost2 = 0;
+
+    for start in grid.points() {
+        if visited.contains(&start) {
+            continue;
+        }
+        let t = grid[start];
+        let mut next = vec![start];
+        let mut area = 0;
+        let mut perimeter = 0;
+        let mut corners = 0;
+
+        let check = |p| grid.in_bounds(p) && grid[p] == t;
+
+        while let Some(p) = next.pop() {
+            if visited.contains(&p) {
+                continue;
+            }
+            visited.insert(p);
+            area += 1;
+            for d in ORTHOGONAL {
+                if check(p + d) {
+                    next.push(p + d);
+                } else {
+                    /* found an edge */
+                    perimeter += 1;
+                    /* check for corners */
+                    let r = d.clockwise();
+                    if !check(p + r) || check(p + r + d) {
+                        corners += 1;
+                    }
+                    let l = d.counter_clockwise();
+                    if !check(p + l) || check(p + l + d) {
+                        corners += 1;
+                    }
+                }
+            }
+        }
+        /* each corner is found twice */
+        corners /= 2;
+        cost += area * perimeter;
+        cost2 += area * corners;
+    }
+    println!("part1: {}", cost);
+    println!("part2: {}", cost2);
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
