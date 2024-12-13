@@ -1,7 +1,8 @@
 advent_of_code::solution!(8);
 
-use gxhash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use itertools::Itertools;
+use rustc_hash::FxHashMap as HashMap;
+use rustc_hash::FxHashSet as HashSet;
 
 fn parse_input(input: &str) -> (Vec<Vec<char>>, HashMap<char, Vec<(i32, i32)>>) {
     let grid = input
@@ -9,7 +10,7 @@ fn parse_input(input: &str) -> (Vec<Vec<char>>, HashMap<char, Vec<(i32, i32)>>) 
         .map(|l| l.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
-    let mut antenna = HashMap::new();
+    let mut antenna = HashMap::default();
 
     for y in 0..grid.len() {
         for x in 0..grid[0].len() {
@@ -27,7 +28,7 @@ fn parse_input(input: &str) -> (Vec<Vec<char>>, HashMap<char, Vec<(i32, i32)>>) 
 
 pub fn part_one(input: &str) -> Option<usize> {
     let (grid, antenna) = parse_input(input);
-    let mut antinodes = HashSet::new();
+    let mut antinodes = HashSet::default();
 
     for (_a, pos) in antenna {
         pos.iter().combinations(2).for_each(|pair| {
@@ -52,7 +53,7 @@ pub fn part_one(input: &str) -> Option<usize> {
 
 pub fn part_two(input: &str) -> Option<usize> {
     let (grid, antenna) = parse_input(input);
-    let mut antinodes = HashSet::new();
+    let mut antinodes = HashSet::default();
 
     for (_a, pos) in antenna {
         pos.iter().combinations(2).for_each(|pair| {

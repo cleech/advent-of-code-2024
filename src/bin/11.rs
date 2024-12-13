@@ -1,6 +1,8 @@
 advent_of_code::solution!(11);
 
-use gxhash::{HashMap, HashMapExt};
+use rustc_hash::FxBuildHasher;
+use std::collections::HashMap;
+use std::hash::BuildHasher;
 
 // this gets too big
 /*
@@ -33,7 +35,10 @@ fn solve(input: &str, loops: usize) -> Option<usize> {
 }
 */
 
-fn blink(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize>) -> usize {
+fn blink<T>(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize, T>) -> usize
+where
+    T: BuildHasher,
+{
     if count == 0 {
         1
     } else if let Some(&value) = cache.get(&(stone, count)) {
@@ -60,13 +65,13 @@ fn solve2(input: &str, loops: usize) -> Option<usize> {
         .split_whitespace()
         .map(|s| s.parse::<u64>().unwrap())
         .collect::<Vec<_>>();
-    let mut cache = HashMap::with_capacity(150_000);
+    let mut cache = HashMap::with_capacity_and_hasher(150_000, FxBuildHasher);
     let count = stones.iter().map(|&s| blink(s, loops, &mut cache)).sum();
     Some(count)
 }
 
 fn solve3(input: &str, loops: usize) -> Option<usize> {
-    let mut stones = HashMap::with_capacity(5000);
+    let mut stones = HashMap::with_capacity_and_hasher(5000, FxBuildHasher);
     input
         .split_whitespace()
         .map(|s| s.parse::<u64>().unwrap())
@@ -77,7 +82,7 @@ fn solve3(input: &str, loops: usize) -> Option<usize> {
                 .or_insert(1_usize);
         });
 
-    let mut next = HashMap::with_capacity(5000);
+    let mut next = HashMap::with_capacity_and_hasher(5000, FxBuildHasher);
 
     for _ in 0..loops {
         for (&stone, &count) in &stones {

@@ -2,7 +2,7 @@ advent_of_code::solution!(12);
 
 use advent_of_code::util::grid::*;
 use advent_of_code::util::point::*;
-use gxhash::{HashSet, HashSetExt};
+use rustc_hash::FxHashSet as HashSet;
 
 #[derive(Debug)]
 struct Region<T>(T, Vec<Point>);
@@ -116,7 +116,7 @@ fn flood<T>(grid: &Grid<T>) -> Vec<Region<T>>
 where
     T: Copy + PartialEq,
 {
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::default();
     let mut regions = vec![];
 
     for start in grid.points() {
