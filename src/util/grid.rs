@@ -10,7 +10,7 @@ use itertools::Itertools;
 pub struct Grid<T> {
     pub width: isize,
     pub height: isize,
-    raw: Vec<T>,
+    pub raw: Vec<T>,
 }
 
 impl Grid<u8> {
@@ -41,6 +41,16 @@ impl Grid<()> {
             height,
             raw: data,
         })
+    }
+}
+
+impl<T: Copy> Grid<T> {
+    pub fn new(width: isize, height: isize, default: T) -> Grid<T> {
+        Grid {
+            width,
+            height,
+            raw: vec![default; (width * height) as usize],
+        }
     }
 }
 
