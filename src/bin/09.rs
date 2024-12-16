@@ -65,7 +65,7 @@ pub fn part_one_0(input: &str) -> Option<usize> {
         .chunks(2)
         .enumerate()
         .flat_map(|(id, file)| {
-            let used = file.get(0);
+            let used = file.first();
             let free = file.get(1);
             let mut v = Vec::new();
             if let Some(n) = used {
@@ -119,7 +119,7 @@ pub fn part_two(input: &str) -> Option<usize> {
         .chunks(2)
         .enumerate()
         .flat_map(|(id, file)| {
-            let used = file.get(0);
+            let used = file.first();
             let free = file.get(1);
             let mut v = Vec::new();
             if let Some(n) = used {
@@ -187,22 +187,12 @@ pub fn part_two(input: &str) -> Option<usize> {
             }
         }
     }
-    let cs = v.iter().fold((0, 0), |(cs, off), e| {
-        if let &Extent::Used { id, len, .. } = e {
-            (
-                cs + (off..(off + len))
-                    .into_iter()
-                    .map(|x| x * id)
-                    .sum::<usize>(),
-                off + len,
-            )
-        } else {
-            if let &Extent::Free(len) = e {
-                (cs, off + len)
-            } else {
-                panic!()
-            }
-        }
+    let cs = v.iter().fold((0, 0), |(cs, off), e| match *e {
+        Extent::Used { id, len, .. } => (
+            cs + (off..(off + len)).map(|x| x * id).sum::<usize>(),
+            off + len,
+        ),
+        Extent::Free(len) => (cs, off + len),
     });
     Some(cs.0)
 }

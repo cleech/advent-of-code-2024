@@ -1,6 +1,7 @@
 use super::point::Point;
 
-use std::fmt::Debug;
+use std::fmt;
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
 
@@ -13,20 +14,10 @@ pub struct Grid<T> {
     pub raw: Vec<T>,
 }
 
-impl Grid<u8> {
-    pub fn _raw(input: &str) -> Self {
-        let bytes: Vec<_> = input.lines().map(str::as_bytes).collect();
-        let height = bytes.len() as isize;
-        let width = bytes[0].len() as isize;
-        let mut raw = Vec::with_capacity((width * height) as usize);
-        bytes.iter().for_each(|slice| raw.extend_from_slice(slice));
-        Grid { width, height, raw }
-    }
-}
-
 impl Grid<()> {
-    pub fn parse<T: FromStr>(input: &str) -> Result<Grid<T>, T::Err>
+    pub fn parse<T>(input: &str) -> Result<Grid<T>, T::Err>
     where
+        T: FromStr,
         <T as FromStr>::Err: Debug,
     {
         let v: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
@@ -44,8 +35,29 @@ impl Grid<()> {
     }
 }
 
+impl Grid<u8> {
+    pub fn _parse(input: &str) -> Self {
+        let bytes: Vec<_> = input.lines().map(str::as_bytes).collect();
+        let height = bytes.len() as isize;
+        let width = bytes[0].len() as isize;
+        let mut raw = Vec::with_capacity((width * height) as usize);
+        bytes.iter().for_each(|slice| raw.extend_from_slice(slice));
+        Grid { width, height, raw }
+    }
+}
+
+impl<T: Default + Clone> Grid<T> {
+    pub fn new(width: isize, height: isize) -> Grid<T> {
+        Grid {
+            width,
+            height,
+            raw: vec![T::default(); (width * height) as usize],
+        }
+    }
+}
+
 impl<T: Copy> Grid<T> {
-    pub fn new(width: isize, height: isize, default: T) -> Grid<T> {
+    pub fn with_default(width: isize, height: isize, default: T) -> Grid<T> {
         Grid {
             width,
             height,
@@ -75,6 +87,30 @@ impl<T> Grid<T> {
         (0..self.width)
             .cartesian_product(0..self.height)
             .map(|t| Point(t.0, t.1))
+    }
+}
+
+impl<T: PartialEq> Grid<T> {
+    pub fn find(&self, goal: T) -> Option<Point> {
+        self.raw
+            .iter()
+            .position(|item| *item == goal)
+            .map(|index| Point((index as isize) % self.width, (index as isize) / self.width))
+    }
+}
+
+impl<T> Display for Grid<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        for y in 0..(self.height as usize) {
+            for x in 0..(self.width as usize) {
+                write!(f, "{}", self[Point(x as isize, y as isize)])?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
     }
 }
 

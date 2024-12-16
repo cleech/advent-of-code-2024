@@ -1,9 +1,8 @@
+advent_of_code::solution!(14);
+
 use advent_of_code::util::{grid::Grid, point::Point};
-use itertools::Itertools;
 use sscanf::{scanf, Error};
 use std::cmp::Ordering::*;
-
-advent_of_code::solution!(14);
 
 type Robot = (i32, i32, i32, i32);
 
@@ -15,19 +14,11 @@ fn parse(input: &str) -> Result<Vec<Robot>, Error> {
 }
 
 fn print_grid(robots: &[Robot], w: i32, h: i32) {
-    let mut grid: Grid<char> = Grid::new(w as isize, h as isize, '⬛');
+    let mut grid: Grid<char> = Grid::with_default(w as isize, h as isize, '⬛');
     for (px, py, _dx, _dy) in robots.iter() {
         grid[Point(*px as isize, *py as isize)] = '🤖';
     }
-    for y in 0..grid.height {
-        println!(
-            "{}",
-            &grid.raw[(y * grid.width) as usize..((y + 1) * (grid.width)) as usize]
-                .iter()
-                .collect::<String>()
-        );
-    }
-    println!();
+    println!("{grid}");
 }
 
 pub fn rmove((x, y, dx, dy): &Robot, t: i32, (w, h): (i32, i32)) -> Robot {

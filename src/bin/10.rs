@@ -12,7 +12,7 @@ fn trailscore(grid: &mut Grid<(u32, bool)>, head: Point, part2: bool) -> u32 {
 
     let mut ret: u32 = 0;
     for &next in &[head + RIGHT, head + LEFT, head + DOWN, head + UP] {
-        if grid.in_bounds(next) && (part2 || grid[next].1 == false) && grid[next].0 == loc + 1 {
+        if grid.in_bounds(next) && (part2 || !grid[next].1) && grid[next].0 == loc + 1 {
             ret += trailscore(grid, next, part2);
         }
     }

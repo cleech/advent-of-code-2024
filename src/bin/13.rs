@@ -35,7 +35,7 @@ fn parse(input: &str, error: i64) -> Vec<Claw> {
 }
 
 /* slow search method */
-fn solve(claw: &Claw) -> Option<i64> {
+fn _solve(claw: &Claw) -> Option<i64> {
     let cost = |(a, b)| 3 * a + b;
     let score = |(a, b)| (a * claw.a.0 + b * claw.b.0, a * claw.a.1 + b * claw.b.1);
 
@@ -72,7 +72,7 @@ fn math(claw: &Claw) -> Option<i64> {
     let b = (a_x * p_y - p_x * a_y) / (a_x * b_y - b_x * a_y);
     // check to see if there is a solution
     if (a * a_x + b * b_x, a * a_y + b * b_y) == (p_x, p_y) {
-        Some((3 * a + b) as i64)
+        Some(3 * a + b)
     } else {
         None
     }
@@ -80,13 +80,13 @@ fn math(claw: &Claw) -> Option<i64> {
 
 pub fn part_one(input: &str) -> Option<i64> {
     let claws = parse(input, 0);
-    // Some(claws.iter().filter_map(|c| solve(c)).sum::<i64>())
-    Some(claws.iter().filter_map(|c| math(c)).sum::<i64>())
+    // Some(claws.iter().filter_map(solve).sum::<i64>())
+    Some(claws.iter().filter_map(math).sum::<i64>())
 }
 
 pub fn part_two(input: &str) -> Option<i64> {
     let claws = parse(input, 10000000000000_i64);
-    Some(claws.iter().filter_map(|c| math(c)).sum::<i64>())
+    Some(claws.iter().filter_map(math).sum::<i64>())
 }
 
 #[cfg(test)]

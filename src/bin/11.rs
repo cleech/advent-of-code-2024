@@ -35,7 +35,7 @@ fn solve(input: &str, loops: usize) -> Option<usize> {
 }
 */
 
-fn blink<T>(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize, T>) -> usize
+fn _blink<T>(stone: u64, count: usize, cache: &mut HashMap<(u64, usize), usize, T>) -> usize
 where
     T: BuildHasher,
 {
@@ -46,27 +46,27 @@ where
     } else {
         let len = stone.checked_ilog10().unwrap_or(0) + 1;
         let next = if stone == 0 {
-            blink(1, count - 1, cache)
+            _blink(1, count - 1, cache)
         } else if len % 2 == 0 {
             let n = 10_u64.pow(len / 2);
             let a = stone / n;
             let b = stone % n;
-            blink(a, count - 1, cache) + blink(b, count - 1, cache)
+            _blink(a, count - 1, cache) + _blink(b, count - 1, cache)
         } else {
-            blink(stone * 2024, count - 1, cache)
+            _blink(stone * 2024, count - 1, cache)
         };
         cache.insert((stone, count), next);
         next
     }
 }
 
-fn solve2(input: &str, loops: usize) -> Option<usize> {
+fn _solve2(input: &str, loops: usize) -> Option<usize> {
     let stones = input
         .split_whitespace()
         .map(|s| s.parse::<u64>().unwrap())
         .collect::<Vec<_>>();
     let mut cache = HashMap::with_capacity_and_hasher(150_000, FxBuildHasher);
-    let count = stones.iter().map(|&s| blink(s, loops, &mut cache)).sum();
+    let count = stones.iter().map(|&s| _blink(s, loops, &mut cache)).sum();
     Some(count)
 }
 
