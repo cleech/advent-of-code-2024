@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 use itertools::Itertools;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grid<T> {
     pub width: isize,
     pub height: isize,

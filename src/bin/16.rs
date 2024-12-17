@@ -17,83 +17,99 @@ fn parse(input: &str) -> Option<Maze> {
     Some(Maze { grid, start, end })
 }
 
-pub fn part_one(input: &str) -> Option<u32> {
-    let mut map = parse(input)?;
-
+fn _part_one(map: &Maze) -> Option<(u32, Vec<Point>)> {
     // BinaryHeap as a priority queue
     let mut next = BinaryHeap::default();
-    next.push((Reverse(0), map.start, RIGHT));
+    next.push((Reverse(0), map.start, RIGHT, vec![]));
 
     let mut visited = HashSet::default();
 
-    while let Some((Reverse(score), point, dir)) = next.pop() {
+    while let Some((Reverse(score), point, dir, history)) = next.pop() {
         if point == map.end {
-            return Some(score);
+            return Some((score, history));
         }
         if !visited.insert((point, dir)) {
             continue;
         }
-        map.grid[point] = 'O';
         if map.grid[point + dir] != '#' {
-            next.push((Reverse(score + 1), point + dir, dir));
+            let mut h = history.clone();
+            h.push(point);
+            next.push((Reverse(score + 1), point + dir, dir, h));
         }
         for d in [dir.clockwise(), dir.counter_clockwise()] {
             if map.grid[point + d] != '#' {
-                next.push((Reverse(score + 1001), point + d, d));
+                let mut h = history.clone();
+                h.push(point);
+                next.push((Reverse(score + 1001), point + d, d, h));
             }
         }
     }
     None
 }
 
+pub fn part_one(input: &str) -> Option<u32> {
+    let map = parse(input)?;
+    let (score, _history) = _part_one(&map)?;
+    /*
+        let mut g = map.grid.clone();
+        for h in _history {
+            g[h] = 'O';
+        }
+        println!("{g}");
+    */
+    Some(score)
+}
+
 pub fn part_two(input: &str) -> Option<u32> {
-    let mut map = parse(input)?;
+    let map = parse(input)?;
 
     // BinaryHeap as a priority queue
     let mut next = BinaryHeap::default();
-    next.push((Reverse(0), map.start, RIGHT));
+    next.push((Reverse(0), map.start, RIGHT, vec![]));
 
     let mut visited = HashMap::default();
-    // let mut best = u32::MAX;
-    let mut best = part_one(input)?;
-    let mut solutions = 0;
 
-    while let Some((Reverse(score), point, dir)) = next.pop() {
-        if score > best {
-            continue;
-        }
+    let (best, _) = _part_one(&map)?;
+
+    let mut solutions = HashSet::default();
+
+    while let Some((Reverse(score), point, dir, history)) = next.pop() {
         if point == map.end {
-            if score < best {
-                best = score;
+            if score == best {
+                solutions.extend(history);
+                solutions.insert(point);
             }
-            solutions += 1;
             continue;
         }
 
-        if let Some(&oldscore) = visited.get(&(point, dir)) {
-            if oldscore > score {
+        if let Some(oldscore) = visited.insert((point, dir), score) {
+            if score > oldscore {
+                visited.insert((point, dir), oldscore);
                 continue;
-            } else {
-                visited
-                    .entry((point, dir))
-                    .and_modify(|s| *s = score.min(*s));
             }
-        } else {
-            visited.insert((point, dir), score);
         }
 
         if map.grid[point + dir] != '#' {
-            next.push((Reverse(score + 1), point + dir, dir));
+            let mut h = history.clone();
+            h.push(point);
+            next.push((Reverse(score + 1), point + dir, dir, h));
         }
         for d in [dir.clockwise(), dir.counter_clockwise()] {
             if map.grid[point + d] != '#' {
-                next.push((Reverse(score + 1001), point + d, d));
+                let mut h = history.clone();
+                h.push(point);
+                next.push((Reverse(score + 1001), point + d, d, h));
             }
         }
     }
-    println!("{}", map.grid);
-    println!("{solutions} solutions are optimal");
-    Some(solutions)
+    /*
+        let mut g = map.grid.clone();
+        for &h in &solutions {
+            g[h] = 'O';
+        }
+        println!("{g}");
+    */
+    Some(solutions.len() as u32)
 }
 
 #[cfg(test)]
@@ -117,10 +133,10 @@ mod tests {
         let result = part_two(&advent_of_code::template::read_file_part(
             "examples", DAY, 1,
         ));
-        // assert_eq!(result, Some(7036));
+        assert_eq!(result, Some(45));
         let result = part_two(&advent_of_code::template::read_file_part(
             "examples", DAY, 2,
         ));
-        // assert_eq!(result, Some(11048));
+        assert_eq!(result, Some(64));
     }
 }
