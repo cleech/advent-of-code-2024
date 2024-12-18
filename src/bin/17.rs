@@ -2,6 +2,7 @@ advent_of_code::solution!(17);
 
 use itertools::Itertools;
 use sscanf::scanf;
+use std::ops::ControlFlow;
 
 #[derive(Debug, Clone)]
 struct Cpu {
@@ -123,25 +124,22 @@ pub fn part_two(input: &str) -> Option<u64> {
      * pass, and that the low 3-bits determine the output, we can solve this 3-bits at a time.
      */
     let cpu = parse(input)?;
-    println!("{:?}", cpu.program);
-    _part_two(&cpu, cpu.program.len(), 0)
+    _part_two(&cpu, cpu.program.len(), 0).break_value()
 }
 
-fn _part_two(cpu: &Cpu, depth: usize, a: u64) -> Option<u64> {
+fn _part_two(cpu: &Cpu, depth: usize, a: u64) -> ControlFlow<u64> {
     if depth == 0 {
-        return Some(a);
+        return ControlFlow::Break(a);
     }
     for rem in 0..8 {
         let mut c = cpu.clone();
         c.a = (a << 3) | rem;
         let o = c.run_to_next_output().unwrap();
         if o == cpu.program[depth - 1] {
-            if let Some(_a) = _part_two(&cpu, depth - 1, (a << 3) | rem) {
-                return Some(_a);
-            }
+            _part_two(&cpu, depth - 1, (a << 3) | rem)?
         }
     }
-    None
+    ControlFlow::Continue(())
 }
 
 #[cfg(test)]
