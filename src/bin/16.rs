@@ -17,30 +17,35 @@ fn parse(input: &str) -> Option<Maze> {
     Some(Maze { grid, start, end })
 }
 
-fn _part_one(map: &Maze) -> Option<(u32, Vec<Point>)> {
+fn _part_one(map: &Maze) -> Option<u32> {
     // BinaryHeap as a priority queue
     let mut next = BinaryHeap::default();
-    next.push((Reverse(0), map.start, RIGHT, vec![]));
+    next.push((Reverse(0), map.start, RIGHT));
 
-    let mut visited = HashSet::default();
+    let mut visited = Grid::with_default(map.grid.width, map.grid.height, [false; 4]);
 
-    while let Some((Reverse(score), point, dir, history)) = next.pop() {
+    while let Some((Reverse(score), point, dir)) = next.pop() {
         if point == map.end {
-            return Some((score, history));
+            return Some(score);
         }
-        if !visited.insert((point, dir)) {
+        let index = match dir {
+            UP => 0,
+            DOWN => 1,
+            LEFT => 2,
+            RIGHT => 3,
+            _ => panic!(),
+        };
+        if visited[point][index] {
             continue;
         }
+        visited[point][index] = true;
+
         if map.grid[point + dir] != '#' {
-            let mut h = history.clone();
-            h.push(point);
-            next.push((Reverse(score + 1), point + dir, dir, h));
+            next.push((Reverse(score + 1), point + dir, dir));
         }
         for d in [dir.clockwise(), dir.counter_clockwise()] {
             if map.grid[point + d] != '#' {
-                let mut h = history.clone();
-                h.push(point);
-                next.push((Reverse(score + 1001), point + d, d, h));
+                next.push((Reverse(score + 1001), point + d, d));
             }
         }
     }
@@ -49,7 +54,7 @@ fn _part_one(map: &Maze) -> Option<(u32, Vec<Point>)> {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let map = parse(input)?;
-    let (score, _history) = _part_one(&map)?;
+    let score = _part_one(&map)?;
     /*
         let mut g = map.grid.clone();
         for h in _history {
@@ -67,14 +72,15 @@ pub fn part_two(input: &str) -> Option<u32> {
     let mut next = BinaryHeap::default();
     next.push((Reverse(0), map.start, RIGHT, vec![]));
 
+    let mut best = u32::MAX;
     let mut visited = HashMap::default();
-
-    let (best, _) = _part_one(&map)?;
-
     let mut solutions = HashSet::default();
 
     while let Some((Reverse(score), point, dir, history)) = next.pop() {
         if point == map.end {
+            if score < best {
+                best = score;
+            }
             if score == best {
                 solutions.extend(history);
                 solutions.insert(point);
@@ -82,11 +88,12 @@ pub fn part_two(input: &str) -> Option<u32> {
             continue;
         }
 
-        if let Some(oldscore) = visited.insert((point, dir), score) {
-            if score > oldscore {
-                visited.insert((point, dir), oldscore);
+        if let Some(&oldscore) = visited.get(&(point, dir)) {
+            if score != oldscore {
                 continue;
             }
+        } else {
+            visited.insert((point, dir), score);
         }
 
         if map.grid[point + dir] != '#' {
@@ -104,8 +111,8 @@ pub fn part_two(input: &str) -> Option<u32> {
     }
     /*
         let mut g = map.grid.clone();
-        for &h in &solutions {
-            g[h] = 'O';
+        for p in &solutions {
+            g[*p] = 'O';
         }
         println!("{g}");
     */
