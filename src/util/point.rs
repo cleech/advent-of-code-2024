@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::{
+    fmt,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Point(pub isize, pub isize);
@@ -64,5 +67,11 @@ impl Point {
     #[inline]
     pub fn counter_clockwise(&self) -> Self {
         Point(self.1, -self.0)
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
     }
 }
