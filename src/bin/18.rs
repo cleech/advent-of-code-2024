@@ -33,11 +33,9 @@ pub fn shortest_path(grid: &Grid<char>) -> Option<u32> {
             return Some(steps);
         }
         for next in ORTHOGONAL.map(|d| point + d) {
-            if grid.in_bounds(next) && grid[next] != '#' {
-                if visited.insert(next) {
-                    frontier.push_back((steps + 1, next))
-                };
-            }
+            if grid.in_bounds(next) && grid[next] != '#' && visited.insert(next) {
+                frontier.push_back((steps + 1, next))
+            };
         }
     }
     None
@@ -53,24 +51,29 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn _part_two(input: &str, width: isize, height: isize, limit: usize) -> Option<Point> {
+    let mut grid = parse(input, width, height, limit)?;
+    let input = input
+        .lines()
+        .map(|line| scanf!(line, "{isize},{isize}").map(|pair| Point(pair.0, pair.1)))
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
     let mut low = limit;
-    let mut high = input.lines().count();
+    let mut high = input.len();
     while low < high {
         let mid = (low + high) / 2;
-        let grid = parse(input, width, height, mid)?;
+        for p in low..=mid {
+            grid[input[p]] = '#';
+        }
         if shortest_path(&grid).is_some() {
             low = mid + 1;
         } else {
+            for p in low..=mid {
+                grid[input[p]] = '.';
+            }
             high = mid;
         }
     }
-    input.lines().nth(low - 1).map(|s| {
-        if let Ok((x, y)) = scanf!(s, "{isize},{isize}") {
-            Some(Point(x, y))
-        } else {
-            None
-        }
-    })?
+    Some(input[low])
 }
 
 pub fn part_two(input: &str) -> Option<Point> {
