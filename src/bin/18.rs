@@ -18,7 +18,7 @@ fn parse(input: &str, width: isize, height: isize, limit: usize) -> Option<Grid<
     Some(grid)
 }
 
-pub fn __part_one(grid: &Grid<char>) -> Option<u32> {
+pub fn shortest_path(grid: &Grid<char>) -> Option<u32> {
     let start = Point(0, 0);
     let end = Point(grid.width - 1, grid.height - 1);
 
@@ -45,7 +45,7 @@ pub fn __part_one(grid: &Grid<char>) -> Option<u32> {
 
 pub fn _part_one(input: &str, width: isize, height: isize, limit: usize) -> Option<u32> {
     let grid = parse(input, width, height, limit)?;
-    __part_one(&grid)
+    shortest_path(&grid)
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -53,16 +53,24 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn _part_two(input: &str, width: isize, height: isize, limit: usize) -> Option<Point> {
-    let mut grid = parse(input, width, height, limit)?;
-
-    for line in input.lines().skip(limit) {
-        let (x, y) = scanf!(line, "{isize},{isize}").ok()?;
-        grid[(x, y).into()] = '#';
-        if __part_one(&grid) == None {
-            return Some(Point(x, y));
+    let mut low = limit;
+    let mut high = input.lines().count();
+    while low < high {
+        let mid = (low + high) / 2;
+        let grid = parse(input, width, height, mid)?;
+        if shortest_path(&grid).is_some() {
+            low = mid + 1;
+        } else {
+            high = mid;
         }
     }
-    None
+    input.lines().nth(low - 1).map(|s| {
+        if let Ok((x, y)) = scanf!(s, "{isize},{isize}") {
+            Some(Point(x, y))
+        } else {
+            None
+        }
+    })?
 }
 
 pub fn part_two(input: &str) -> Option<Point> {
