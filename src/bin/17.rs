@@ -2,7 +2,7 @@ advent_of_code::solution!(17);
 
 use itertools::Itertools;
 use sscanf::scanf;
-use std::ops::ControlFlow;
+use std::{ops::ControlFlow, rc::Rc};
 
 #[derive(Debug, Clone)]
 struct Cpu {
@@ -10,25 +10,25 @@ struct Cpu {
     b: u64,
     c: u64,
     ip: usize,
-    program: Vec<u8>,
-    output: Vec<u8>,
+    program: Rc<Vec<u8>>,
 }
 
 #[derive(Debug)]
 enum Opcode {
-    Adv(u8),
-    Bxl(u8),
-    Bst(u8),
-    Jnz(u8),
+    Adv(u64),
+    Bxl(u64),
+    Bst(u64),
+    Jnz(u64),
     Bxc,
-    Out(u8),
-    Bdv(u8),
-    Cdv(u8),
+    Out(u64),
+    Bdv(u64),
+    Cdv(u64),
 }
 use Opcode::*;
 
 impl Cpu {
     fn run_one(&mut self) -> Option<u8> {
+        let literal = |operand: u8| -> u64 { operand.into() };
         let combo = |operand: u8| -> u64 {
             match operand {
                 n @ 0..=3 => n.into(),
@@ -40,36 +40,36 @@ impl Cpu {
         };
         let decode = |opcode: u8, operand: u8| -> Opcode {
             match opcode {
-                0 => Adv(operand),
-                1 => Bxl(operand),
-                2 => Bst(operand),
-                3 => Jnz(operand),
+                0 => Adv(combo(operand)),
+                1 => Bxl(literal(operand)),
+                2 => Bst(combo(operand)),
+                3 => Jnz(literal(operand)),
                 4 => Bxc,
-                5 => Out(operand),
-                6 => Bdv(operand),
-                7 => Cdv(operand),
+                5 => Out(combo(operand)),
+                6 => Bdv(combo(operand)),
+                7 => Cdv(combo(operand)),
                 _ => unreachable!(),
             }
         };
         let opcode = decode(self.program[self.ip], self.program[self.ip + 1]);
         match opcode {
-            Adv(operand) => self.a >>= combo(operand),
-            Bxl(literal) => self.b ^= literal as u64,
-            Bst(operand) => self.b = combo(operand) % 8,
-            Jnz(literal) => {
+            Adv(op) => self.a >>= op,
+            Bxl(op) => self.b ^= op,
+            Bst(op) => self.b = op % 8,
+            Jnz(op) => {
                 if self.a != 0 {
-                    self.ip = literal as usize;
+                    self.ip = op as usize;
                     return None;
                 }
             }
             Bxc => self.b ^= self.c,
-            Out(operand) => {
-                let out = (combo(operand) % 8).try_into().unwrap();
+            Out(op) => {
+                let out = (op % 8).try_into().unwrap();
                 self.ip += 2;
                 return Some(out);
             }
-            Bdv(operand) => self.b = self.a >> combo(operand),
-            Cdv(operand) => self.c = self.a >> combo(operand),
+            Bdv(op) => self.b = self.a >> op,
+            Cdv(op) => self.c = self.a >> op,
         }
         self.ip += 2;
         None
@@ -83,10 +83,12 @@ impl Cpu {
         }
         None
     }
-    fn run_to_completion(&mut self) {
+    fn run_to_completion(&mut self) -> Vec<u8> {
+        let mut output = vec![];
         while let Some(out) = self.run_to_next_output() {
-            self.output.push(out);
+            output.push(out);
         }
+        output
     }
 }
 
@@ -98,31 +100,31 @@ fn parse(input: &str) -> Option<Cpu> {
     let c = scanf!(registers.next()?, "Register C: {u64}").ok()?;
     let suffix = suffix.trim();
     let p = scanf!(suffix, "Program: {}", str).unwrap();
-    let p = p
-        .split(',')
-        .map(|s| s.parse::<u8>().unwrap())
-        .collect::<Vec<_>>();
+    let p = Rc::new(
+        p.split(',')
+            .map(|s| s.parse::<u8>().unwrap())
+            .collect::<Vec<_>>(),
+    );
     Some(Cpu {
         a,
         b,
         c,
         ip: 0,
         program: p,
-        output: Vec::default(),
     })
 }
 
 pub fn part_one(input: &str) -> Option<String> {
     let mut cpu = parse(input)?;
-    cpu.run_to_completion();
-    Some(cpu.output.into_iter().map(|n| n.to_string()).join(","))
+    let output = cpu.run_to_completion();
+    Some(output.into_iter().map(|n| n.to_string()).join(","))
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
-    /* All of these functions operate on an input in register A, and loop until it's reduced to 0.
-     * Each loop outputs a 3-bit value, derivied from A. Knowing that A is reduced by 3-bits each
-     * pass, and that the low 3-bits determine the output, we can solve this 3-bits at a time.
-     */
+    // All of these functions operate on an input in register A, and loop until
+    // it's reduced to 0. Each loop outputs a 3-bit value, derivied from A.
+    // Knowing that A is reduced by 3-bits each pass, and that the low 3-bits
+    // determine the output, we can solve this 3-bits at a time.
     let cpu = parse(input)?;
     _part_two(&cpu, cpu.program.len(), 0).break_value()
 }
@@ -136,7 +138,7 @@ fn _part_two(cpu: &Cpu, depth: usize, a: u64) -> ControlFlow<u64> {
         c.a = (a << 3) | rem;
         let o = c.run_to_next_output().unwrap();
         if o == cpu.program[depth - 1] {
-            _part_two(&cpu, depth - 1, (a << 3) | rem)?
+            _part_two(cpu, depth - 1, (a << 3) | rem)?
         }
     }
     ControlFlow::Continue(())
