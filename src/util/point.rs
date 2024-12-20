@@ -59,8 +59,7 @@ impl SubAssign for Point {
 }
 
 impl Point {
-    /* manhatten distance */
-    pub fn distance(&self, other: &Self) -> usize {
+    pub fn manhatten_distance(&self, other: &Self) -> usize {
         self.0.abs_diff(other.0) + self.1.abs_diff(other.1)
     }
     /* 90° rotations */
