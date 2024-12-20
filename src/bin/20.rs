@@ -1,6 +1,7 @@
 advent_of_code::solution!(20);
 
 use advent_of_code::util::{grid::*, point::*};
+use rayon::prelude::*;
 
 // Path follower for the single track.
 // This only works because there are no branches.
@@ -49,7 +50,7 @@ pub fn day20(input: &str, cheat_len: usize) -> Option<usize> {
     // This will let us do a binary partition to locate all possible end-points
     // within a cheat range.
     let bsp: Vec<Vec<Cheat>> = path
-        .iter()
+        .par_iter()
         .enumerate()
         // enumeration == path index == time from start
         .map(|(ia, a)| {
@@ -69,20 +70,25 @@ pub fn day20(input: &str, cheat_len: usize) -> Option<usize> {
         .collect();
 
     // find all cheats which save at least 100 steps
-    let mut count = 0;
-    for (ia, _a) in path.iter().enumerate() {
-        let bsp = &bsp[ia];
-        let high = bsp.partition_point(|cheat| cheat.distance < cheat_len + 1);
-        let low = bsp[..high].partition_point(|cheat| cheat.distance < 2);
-        for cheat in &bsp[low..high] {
-            // replace the path distance between start and end point with the
-            // grid distance ignoring obstructions to calculate time saved
-            let saved = cheat.end - ia - cheat.distance;
-            if saved >= 100 {
-                count += 1;
+    let count = path
+        .par_iter()
+        .enumerate()
+        .map(|(ia, _a)| {
+            let mut count = 0;
+            let bsp = &bsp[ia];
+            let high = bsp.partition_point(|cheat| cheat.distance < cheat_len + 1);
+            let low = bsp.partition_point(|cheat| cheat.distance < 2);
+            for cheat in &bsp[low..high] {
+                // replace the path distance between start and end point with the
+                // grid distance ignoring obstructions to calculate time saved
+                let saved = cheat.end - ia - cheat.distance;
+                if saved >= 100 {
+                    count += 1;
+                }
             }
-        }
-    }
+            count
+        })
+        .sum();
     Some(count)
 }
 
