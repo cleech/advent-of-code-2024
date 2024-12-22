@@ -1,10 +1,9 @@
 advent_of_code::solution!(21);
 
-use std::iter;
-
 use advent_of_code::util::point::*;
 use itertools::Itertools;
 use rustc_hash::FxHashMap as HashMap;
+use std::iter;
 
 fn numeric_keypad(start: char, end: char) -> Vec<String> {
     let button = |c| match c {
@@ -34,6 +33,7 @@ fn numeric_keypad(start: char, end: char) -> Vec<String> {
         _ => unreachable!(),
     }
     .repeat(x.abs() as usize);
+
     let ys = match y.signum() {
         0 => String::new(),
         1 => "v".to_owned(),
@@ -85,6 +85,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
         _ => unreachable!(),
     }
     .repeat(x.abs() as usize);
+
     let ys = match y.signum() {
         0 => String::new(),
         1 => "v".to_owned(),
@@ -94,6 +95,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
     .repeat(y.abs() as usize);
 
     let mut output = vec![];
+
     if !(a.1 == 0 && b.0 == 0) {
         let mut s1 = String::new();
         s1.push_str(&xs);
@@ -113,7 +115,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
     output
 }
 
-fn npad(input: &str, robots: usize) -> usize {
+fn npad(input: &str, robots: usize, lookup: &mut HashMap<(String, usize), usize>) -> usize {
     let mut acc = 0;
     // println!("= {} =", input);
     for (a, b) in iter::once('A').chain(input.chars()).tuple_windows() {
@@ -122,7 +124,7 @@ fn npad(input: &str, robots: usize) -> usize {
         // println!("- {:?}", sequences);
         acc += sequences
             .into_iter()
-            .map(|s| dpad(&s, robots))
+            .map(|s| dpad(&s, robots, lookup))
             // .inspect(|x| println!("  {}", x))
             .min()
             .unwrap();
@@ -130,9 +132,12 @@ fn npad(input: &str, robots: usize) -> usize {
     acc
 }
 
-fn dpad(input: &str, robots: usize) -> usize {
+fn dpad(input: &str, robots: usize, lookup: &mut HashMap<(String, usize), usize>) -> usize {
     let mut acc = 0;
     // println!("== {} ==", input);
+    if let Some(cached) = lookup.get(&(input.to_string(), robots)) {
+        return *cached;
+    }
     for (a, b) in iter::once('A').chain(input.chars()).tuple_windows() {
         let sequences = directional_keypad(a, b);
         let depth = robots - 1;
@@ -141,7 +146,7 @@ fn dpad(input: &str, robots: usize) -> usize {
             // println!("-- {:?}", sequences);
             acc += sequences
                 .into_iter()
-                .map(|s| dpad(&s, depth))
+                .map(|s| dpad(&s, depth, lookup))
                 // .inspect(|x| println!("    {}", x))
                 .min()
                 .unwrap();
@@ -156,14 +161,16 @@ fn dpad(input: &str, robots: usize) -> usize {
                 .unwrap();
         }
     }
+    lookup.insert((input.to_string(), robots), acc);
     acc
 }
 
 fn day21(input: &str, robots: usize) -> Option<usize> {
+    let mut lookup = HashMap::<(String, usize), usize>::default();
     let mut sum = 0;
     for code in input.lines() {
         let c = &code[..code.len() - 1].parse::<usize>().ok()?;
-        let s = npad(code, robots);
+        let s = npad(code, robots, &mut lookup);
         // println!("{} {}", c, s);
         sum += c * s;
     }
