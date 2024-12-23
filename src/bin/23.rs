@@ -26,15 +26,13 @@ pub fn part_one(input: &str) -> Option<u64> {
             if b > a {
                 let b_neigh = links.get(b)?;
                 for &c in b_neigh {
-                    if c > b {
-                        if a_neigh.contains(&c) {
-                            if a.as_bytes()[0] == b't'
-                                || b.as_bytes()[0] == b't'
-                                || c.as_bytes()[0] == b't'
-                            {
-                                count += 1;
-                            }
-                        }
+                    if c > b
+                        && a_neigh.contains(&c)
+                        && (a.as_bytes()[0] == b't'
+                            || b.as_bytes()[0] == b't'
+                            || c.as_bytes()[0] == b't')
+                    {
+                        count += 1;
                     }
                 }
             }

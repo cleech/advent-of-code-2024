@@ -1,6 +1,6 @@
 advent_of_code::solution!(19);
 
-fn parse<'a>(input: &'a str) -> Option<(Vec<&'a str>, Vec<&'a str>)> {
+fn parse(input: &str) -> Option<(Vec<&str>, Vec<&str>)> {
     let (prefix, suffix) = input.split_once("\n\n")?;
     let patterns = prefix.split(", ").collect::<Vec<_>>();
     let designs = suffix.lines().collect::<Vec<_>>();

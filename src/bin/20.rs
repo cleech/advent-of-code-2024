@@ -61,7 +61,7 @@ pub fn day20(input: &str, cheat_len: usize) -> Option<usize> {
                 .enumerate()
                 .map(|(ib, b)| Cheat {
                     end: ia + ib,
-                    distance: a.manhatten_distance(&b),
+                    distance: a.manhatten_distance(b),
                 })
                 .collect();
             list.sort_by_key(|n| n.distance);

@@ -32,7 +32,7 @@ fn numeric_keypad(start: char, end: char) -> Vec<String> {
         -1 => "<".to_owned(),
         _ => unreachable!(),
     }
-    .repeat(x.abs() as usize);
+    .repeat(x.unsigned_abs());
 
     let ys = match y.signum() {
         0 => String::new(),
@@ -40,7 +40,7 @@ fn numeric_keypad(start: char, end: char) -> Vec<String> {
         -1 => "^".to_owned(),
         _ => unreachable!(),
     }
-    .repeat(y.abs() as usize);
+    .repeat(y.unsigned_abs());
 
     let mut output = vec![];
 
@@ -48,7 +48,7 @@ fn numeric_keypad(start: char, end: char) -> Vec<String> {
         let mut s1 = String::new();
         s1.push_str(&xs);
         s1.push_str(&ys);
-        s1.push_str("A");
+        s1.push('A');
         output.push(s1);
     }
 
@@ -56,7 +56,7 @@ fn numeric_keypad(start: char, end: char) -> Vec<String> {
         let mut s2 = String::new();
         s2.push_str(&ys);
         s2.push_str(&xs);
-        s2.push_str("A");
+        s2.push('A');
         output.push(s2);
     }
 
@@ -84,7 +84,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
         -1 => "<".to_owned(),
         _ => unreachable!(),
     }
-    .repeat(x.abs() as usize);
+    .repeat(x.unsigned_abs());
 
     let ys = match y.signum() {
         0 => String::new(),
@@ -92,7 +92,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
         -1 => "^".to_owned(),
         _ => unreachable!(),
     }
-    .repeat(y.abs() as usize);
+    .repeat(y.unsigned_abs());
 
     let mut output = vec![];
 
@@ -100,7 +100,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
         let mut s1 = String::new();
         s1.push_str(&xs);
         s1.push_str(&ys);
-        s1.push_str("A");
+        s1.push('A');
         output.push(s1);
     }
 
@@ -108,7 +108,7 @@ fn directional_keypad(start: char, end: char) -> Vec<String> {
         let mut s2 = String::new();
         s2.push_str(&ys);
         s2.push_str(&xs);
-        s2.push_str("A");
+        s2.push('A');
         output.push(s2);
     }
 
