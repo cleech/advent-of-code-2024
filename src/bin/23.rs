@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 advent_of_code::solution!(23);
@@ -44,42 +43,68 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(count)
 }
 
-pub fn part_two(input: &str) -> Option<String> {
-    let mut computers = HashSet::default();
-    let mut links = HashMap::default();
-    for line in input.lines() {
-        let (a, b) = line.split_once('-')?;
-        computers.insert(a);
-        computers.insert(b);
-        links
-            .entry(a)
-            .and_modify(|lan: &mut Vec<&str>| lan.push(b))
-            .or_insert(vec![b]);
-        links
-            .entry(b)
-            .and_modify(|lan: &mut Vec<&str>| lan.push(a))
-            .or_insert(vec![a]);
+fn bron_kerbosch(
+    graph: &HashMap<String, HashSet<String>>,
+    r: HashSet<String>,
+    mut p: HashSet<String>,
+    mut x: HashSet<String>,
+    max_clique: &mut HashSet<String>,
+) {
+    if p.is_empty() && x.is_empty() {
+        if r.len() > max_clique.len() {
+            *max_clique = r.clone();
+        }
+        return;
     }
 
-    for size in (3..=computers.len()).rev() {
-        'outer: for clique in computers.iter().cloned().combinations(size) {
-            for a in &clique[..] {
-                let neigh = links.get(a)?;
-                for b in &clique[..] {
-                    if *a == *b {
-                        continue;
-                    }
-                    if !neigh.contains(b) {
-                        continue 'outer;
-                    }
-                }
-            }
-            let mut ret = clique.clone();
-            ret.sort();
-            return Some(ret.join(","));
-        }
+    let pivot = p.union(&x).next().unwrap().clone();
+    let neighbors = &graph[&pivot];
+    let candidates: Vec<_> = p.difference(neighbors).cloned().collect();
+
+    for v in candidates {
+        let mut new_r = r.clone();
+        new_r.insert(v.clone());
+        let new_p: HashSet<_> = p.intersection(&graph[&v]).cloned().collect();
+        let new_x: HashSet<_> = x.intersection(&graph[&v]).cloned().collect();
+
+        bron_kerbosch(graph, new_r, new_p, new_x, max_clique);
+
+        p.remove(&v);
+        x.insert(v);
     }
-    None
+}
+
+fn find_max_clique(graph: &HashMap<String, HashSet<String>>) -> HashSet<String> {
+    let mut max_clique = HashSet::default();
+    let all_nodes: HashSet<_> = graph.keys().cloned().collect();
+    bron_kerbosch(
+        graph,
+        HashSet::default(),
+        all_nodes.clone(),
+        HashSet::default(),
+        &mut max_clique,
+    );
+    max_clique
+}
+
+pub fn part_two(input: &str) -> Option<String> {
+    let mut graph = HashMap::default();
+    for line in input.lines() {
+        let (a, b) = line.split_once('-')?;
+        graph
+            .entry(a.to_string())
+            .or_insert(HashSet::default())
+            .insert(b.to_string());
+        graph
+            .entry(b.to_string())
+            .or_insert(HashSet::default())
+            .insert(a.to_string());
+    }
+
+    let clique = find_max_clique(&graph);
+    let mut c = clique.into_iter().collect::<Vec<_>>();
+    c.sort();
+    Some(c[..].join(","))
 }
 
 #[cfg(test)]
