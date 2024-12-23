@@ -2,7 +2,7 @@ advent_of_code::solution!(22);
 
 use itertools::Itertools;
 use rayon::prelude::*;
-use rustc_hash::FxHashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::{
     iter::successors,
     ops::{BitAnd, BitXor, Shl, Shr},
@@ -24,6 +24,7 @@ where
 }
 
 pub fn part_one(input: &str) -> Option<i64> {
+    // Vec<impl Iterator<Item = i32>>
     let monkeys = input
         .lines()
         .map(|line| {
@@ -41,10 +42,11 @@ pub fn part_one(input: &str) -> Option<i64> {
 
 // pack 4 signed single digit values into one u32 for a hash key
 fn pack(a: i32, b: i32, c: i32, d: i32) -> u32 {
-    ((a + 9) << 24 | (b + 9) << 16 | (c + 9) << 8 | (d + 9)) as u32
+    ((a + 9) << 18 | (b + 9) << 12 | (c + 9) << 6 | (d + 9)) as u32
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
+    // Vec<impl Iterator<Item = i32>>
     let monkeys = input
         .lines()
         .map(|line| {
@@ -54,20 +56,23 @@ pub fn part_two(input: &str) -> Option<i32> {
         })
         .collect::<Option<Vec<_>>>()?;
 
-    let monkeys = monkeys.into_iter().map(|m| {
-        let mut prices = FxHashMap::default();
-        m.take(2001)
-            .tuple_windows()
-            .map(|(a, b)| (b % 10, (b % 10) - (a % 10)))
-            .tuple_windows()
-            .map(|(a, b, c, d)| (d.0, pack(a.1, b.1, c.1, d.1)))
-            .for_each(|x| {
-                prices.entry(x.1).or_insert(x.0);
-            });
-        prices
-    });
+    let monkeys: Vec<HashMap<u32, i32>> = monkeys
+        .into_par_iter()
+        .map(|m| {
+            let mut prices = HashMap::default();
+            m.take(2001)
+                .tuple_windows()
+                .map(|(a, b)| (b % 10, (b % 10) - (a % 10)))
+                .tuple_windows()
+                .map(|(a, b, c, d)| (d.0, pack(a.1, b.1, c.1, d.1)))
+                .for_each(|x| {
+                    prices.entry(x.1).or_insert(x.0);
+                });
+            prices
+        })
+        .collect::<Vec<_>>();
 
-    let mut prices = FxHashMap::default();
+    let mut prices = HashMap::default();
     for m in monkeys {
         for (pattern, price) in m {
             prices
