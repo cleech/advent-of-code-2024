@@ -3,33 +3,53 @@ advent_of_code::solution!(22);
 use itertools::Itertools;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-use std::iter::successors;
+use std::{
+    iter::successors,
+    ops::{BitAnd, BitXor, Shl, Shr},
+};
 
-fn hash(mut n: i64) -> i64 {
-    n = (n ^ (n << 6)) & 0x0ffffff;
-    n = (n ^ (n >> 5)) & 0x0ffffff;
-    (n ^ (n << 11)) & 0x0ffffff
+fn hash<T>(mut n: T) -> T
+where
+    T: Shl<i32, Output = T>
+        + Shr<i32, Output = T>
+        + BitAnd<T, Output = T>
+        + BitXor<T, Output = T>
+        + From<i32>
+        + Copy,
+{
+    let mask: T = 0x0ffffff.into();
+    n = (n ^ (n << 6)) & mask;
+    n = (n ^ (n >> 5)) & mask;
+    (n ^ (n << 11)) & mask
 }
 
 pub fn part_one(input: &str) -> Option<i64> {
     let monkeys = input
         .lines()
         .map(|line| {
-            line.parse::<i64>()
-                .and_then(|n| Ok(successors(Some(n), |&n| Some(hash(n)))))
+            line.parse::<i32>()
+                .map(|n| successors(Some(n), |&n| Some(hash(n))))
                 .ok()
         })
         .collect::<Option<Vec<_>>>()?;
 
-    monkeys.into_par_iter().map(|i| i.skip(2000).next()).sum()
+    monkeys
+        .into_par_iter()
+        .map(|mut i| i.nth(2000).map(|n| n as i64))
+        .sum()
 }
 
-pub fn part_two(input: &str) -> Option<i64> {
+// pack 4 signed single digit values into one u32 for a hash key
+fn pack(a: i32, b: i32, c: i32, d: i32) -> u32 {
+    ((a + 9) << 24 | (b + 9) << 16 | (c + 9) << 8 | (d + 9)) as u32
+}
+
+pub fn part_two(input: &str) -> Option<i32> {
     let monkeys = input
         .lines()
         .map(|line| {
-            line.parse::<i64>()
-                .and_then(|n| Ok(successors(Some(n), |&n| Some(hash(n)))))
+            line.parse::<i32>()
+                .map(|n| successors(Some(n), |&n| Some(hash(n))))
                 .ok()
         })
         .collect::<Option<Vec<_>>>()?;
@@ -40,7 +60,7 @@ pub fn part_two(input: &str) -> Option<i64> {
             .tuple_windows()
             .map(|(a, b)| (b % 10, (b % 10) - (a % 10)))
             .tuple_windows()
-            .map(|(a, b, c, d)| (d.0, (a.1, b.1, c.1, d.1)))
+            .map(|(a, b, c, d)| (d.0, pack(a.1, b.1, c.1, d.1)))
             .for_each(|x| {
                 prices.entry(x.1).or_insert(x.0);
             });
