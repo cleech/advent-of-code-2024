@@ -41,12 +41,12 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(count)
 }
 
-fn bron_kerbosch(
-    graph: &HashMap<String, HashSet<String>>,
-    r: HashSet<String>,
-    mut p: HashSet<String>,
-    mut x: HashSet<String>,
-    max_clique: &mut HashSet<String>,
+fn bron_kerbosch<'g>(
+    graph: &'g HashMap<&str, HashSet<&str>>,
+    r: HashSet<&'g str>,
+    mut p: HashSet<&'g str>,
+    mut x: HashSet<&'g str>,
+    max_clique: &mut HashSet<&'g str>,
 ) {
     if p.is_empty() && x.is_empty() {
         if r.len() > max_clique.len() {
@@ -55,24 +55,24 @@ fn bron_kerbosch(
         return;
     }
 
-    let pivot = p.union(&x).next().unwrap().clone();
-    let neighbors = &graph[&pivot];
+    let pivot = *p.union(&x).next().unwrap();
+    let neighbors = &graph[pivot];
     let candidates: Vec<_> = p.difference(neighbors).cloned().collect();
 
     for v in candidates {
         let mut new_r = r.clone();
-        new_r.insert(v.clone());
-        let new_p: HashSet<_> = p.intersection(&graph[&v]).cloned().collect();
-        let new_x: HashSet<_> = x.intersection(&graph[&v]).cloned().collect();
+        new_r.insert(v);
+        let new_p: HashSet<_> = p.intersection(&graph[v]).cloned().collect();
+        let new_x: HashSet<_> = x.intersection(&graph[v]).cloned().collect();
 
         bron_kerbosch(graph, new_r, new_p, new_x, max_clique);
 
-        p.remove(&v);
+        p.remove(v);
         x.insert(v);
     }
 }
 
-fn find_max_clique(graph: &HashMap<String, HashSet<String>>) -> HashSet<String> {
+fn find_max_clique<'g>(graph: &'g HashMap<&str, HashSet<&str>>) -> HashSet<&'g str> {
     let mut max_clique = HashSet::default();
     let all_nodes: HashSet<_> = graph.keys().cloned().collect();
     bron_kerbosch(
@@ -89,14 +89,8 @@ pub fn part_two(input: &str) -> Option<String> {
     let mut graph = HashMap::default();
     for line in input.lines() {
         let (a, b) = line.split_once('-')?;
-        graph
-            .entry(a.to_string())
-            .or_insert(HashSet::default())
-            .insert(b.to_string());
-        graph
-            .entry(b.to_string())
-            .or_insert(HashSet::default())
-            .insert(a.to_string());
+        graph.entry(a).or_insert(HashSet::default()).insert(b);
+        graph.entry(b).or_insert(HashSet::default()).insert(a);
     }
 
     let clique = find_max_clique(&graph);
