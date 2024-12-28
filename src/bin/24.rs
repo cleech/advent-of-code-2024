@@ -3,6 +3,7 @@ use sscanf::scanf;
 
 advent_of_code::solution!(24);
 
+#[derive(Debug, PartialEq, Eq)]
 enum GateType {
     AND,
     OR,
@@ -10,10 +11,12 @@ enum GateType {
 }
 use GateType::*;
 
+#[derive(Debug)]
 struct Gate {
     op: GateType,
     a: String,
     b: String,
+    s: String,
 }
 
 fn parse(input: &str) -> Option<(HashMap<String, u8>, HashMap<String, Gate>)> {
@@ -36,6 +39,7 @@ fn parse(input: &str) -> Option<(HashMap<String, u8>, HashMap<String, Gate>)> {
         let gate = Gate {
             a,
             b,
+            s: output.clone(),
             op: match op {
                 "AND" => AND,
                 "OR" => OR,
@@ -82,8 +86,121 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(solution)
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+fn _check(wires: &mut HashMap<String, u8>, gates: &HashMap<String, Gate>, output: &str) -> u8 {
+    if let Some(value) = wires.get(output) {
+        return *value;
+    }
+    if let Some(gate) = gates.get(output) {
+        let a = _check(wires, gates, &gate.a);
+        let b = _check(wires, gates, &gate.b);
+        let value = match gate.op {
+            AND => a & b,
+            OR => a | b,
+            XOR => a ^ b,
+        };
+        wires.insert(output.to_string(), value);
+        return value;
+    }
+    unreachable!();
+}
+
+pub fn part_two(input: &str) -> Option<String> {
+    let (mut _wires, gates) = parse(input)?;
+
+    let half_addr = |n: usize| -> Option<()> {
+        let s = format!("z{n:02}");
+        let gate = gates.get(&s)?;
+
+        println!("{gate:?}");
+
+        assert!(gate.op == XOR);
+        // only expect a single half adder on z00
+        assert!(gate.a == "y00" || gate.a == "x00");
+        assert!(gate.b == "x00" || gate.b == "y00");
+        assert!(gate.s == "z00");
+        // Cout will be checked from z01 Cin
+
+        Some(())
+    };
+
+    let carry_out = |s: &str| -> Vec<String> {
+        let mut output = vec![];
+        let gate = &gates[s];
+        assert!(gate.op == OR);
+        let a = &gates[&gate.a];
+        let b = &gates[&gate.b];
+        if !(a.op == AND) {
+            println!("!!! error at {:02}", a.s);
+            output.push(a.s.clone());
+        }
+        if !(b.op == AND) {
+            println!("!!! error at {:02}", b.s);
+            output.push(b.s.clone());
+        }
+        output
+    };
+
+    let full_addr = |n: usize| -> Vec<String> {
+        let mut output = vec![];
+        let s = format!("z{n:02}");
+        let gate = &gates[&s];
+
+        println!("{gate:?}");
+
+        assert!(gate.s == s);
+        // assert!(gate.op == XOR);
+        if !(gate.op == XOR) {
+            println!("!!! error at z{n:02}");
+            output.push(gate.s.clone());
+            return output;
+        }
+        let a = &gates[&gate.a];
+        let b = &gates[&gate.b];
+        for input in &[a, b] {
+            println!("{input:?}");
+            let x = format!("x{n:02}");
+            let y = format!("y{n:02}");
+            if input.op == XOR {
+                // assert!(input.a == x || input.a == y);
+                if !(input.a == x || input.a == y) || !(input.b == x || input.b == y) {
+                    println!("!!! error at {}", input.s);
+                    output.push(input.s.clone());
+                    // return None;
+                }
+            } else if input.op == AND {
+                // Cout from half addr
+                if !(input.a == "x00" || input.a == "y00")
+                    || !(input.b == "x00" || input.b == "y00")
+                {
+                    println!("!!! error at {}", input.s);
+                    output.push(input.s.clone());
+                    // return None;
+                }
+            } else if input.op == OR {
+                // Cout from full addr
+                let cout = input;
+                output.extend(carry_out(&cout.s));
+            }
+        }
+        output
+    };
+
+    let mut output = vec![];
+
+    // bit-0 half adder
+    println!("== 00 ==");
+    half_addr(0);
+
+    // bits 1-44 full adder
+    for n in 1..=44 {
+        println!("== {n:02} ==");
+        output.extend(full_addr(n));
+    }
+    // bit-45 carry out / overflow
+    //
+
+    output.sort();
+    Some(output.join(","))
 }
 
 #[cfg(test)]
